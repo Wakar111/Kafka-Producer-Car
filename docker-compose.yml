@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  post_db:
+    image: postgres:alpine
+    container_name: database
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: postgres
+      POSTGRES_DB: car
+    ports:
+      - 5432:5432
+
+  carmodels:
+    image: app-server:latest
+    depends_on:
+      - post_db
+    ports:
+      - 8080:8080
+
+volumes:
+  postgres-data:
+    driver: local
