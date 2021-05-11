@@ -33,6 +33,7 @@ public class CarController {
 
     @PostMapping(value = "/addcar")
     public void addNewCar(@RequestBody Car car) {
+        // send post request to kafka topic
         kafkaTemplate.send(topic, car);
         carService.addCar(car);
     }

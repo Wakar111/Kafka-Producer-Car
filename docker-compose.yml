@@ -1,9 +1,30 @@
 version: '3'
 
 services:
+  zookeeper:
+    image: zookeeper
+    container_name: zookeeper-container
+    ports:
+      - 2181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka
+    container_name: kafka-container
+    hostname: ${KAFKA_HOSTNAME:-kafka}
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+
   post_db:
     image: postgres:alpine
-    container_name: database
+    container_name: pg-database-container
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
@@ -14,12 +35,30 @@ services:
       - 5432:5432
 
   carmodels:
-    image: app-server:latest
+    image: app-server-producer:latest
+    container_name: car-producer-container
     depends_on:
       - post_db
+      - kafka
+      - zookeeper
     ports:
       - 8080:8080
+
+  consumer-app:
+    image: app-consumer:latest
+    container_name: car-consumer-container
+    depends_on:
+      - kafka
+      - zookeeper
+    ports:
+      - 8085:8085
 
 volumes:
   postgres-data:
     driver: local
+
+
+#networks:
+#  default:
+#    external:
+#      name: demo-app-network
